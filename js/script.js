@@ -1,15 +1,16 @@
-// data
-
+//global data store
 const validCoupon = 1212;
 
+// ✔✔helper fucntion
 function getNumber(id) {
-    const number = parseFloat(document.getElementById(id).innerText);
-    return number;
+    return parseFloat(document.getElementById(id).innerText) || 0;
+
 }
-function setNumber(id, setNumber) {
-    document.getElementById(id).innerText = setNumber;
+function setNumber(id, value) {
+    document.getElementById(id).innerText = value;
 }
 
+// ✅ coupon apply
 document.getElementById('disount-btn').addEventListener('click', function () {
     const coupon = parseInt(document.getElementById('coupon').value);
     const subtotalPrice = getNumber('subtotal-price');
@@ -24,101 +25,99 @@ document.getElementById('disount-btn').addEventListener('click', function () {
         alert('Please Enter the Valid Coupon Code.')
     }
 })
+// ✅✅ add to cart
 document.getElementById('shop-container').addEventListener('click', function (event) {
     if (event.target.className.includes('buy-btn')) {
-        // console.log(event.target);
-
+        // get product info
         const productImg = event.target.parentNode.parentNode.parentNode.children[0].children[0].src;
-        // console.log(productImg);
         const productTitle = event.target.parentNode.parentNode.children[1].innerText;
-        // console.log(productTitle);
         const productPrice = parseFloat(event.target.parentNode.parentNode.children[2].innerText);
-        // console.log(productPrice);
-
+        // update total and subtotal
         const subtotalPrice = getNumber('subtotal-price');
-
         const newsubtotal = productPrice + subtotalPrice;
         setNumber('subtotal-price', newsubtotal);
         setNumber('total-price', newsubtotal);
 
-        // quantity
-
+        //upadate glbal quantity
         const quantity = getNumber('quantity');
-
         setNumber('quantity', quantity + 1);
-        // console.log(quantity);
 
         // parent 
         const cartParent = document.getElementById('cart-parent');
 
-        // check produt exits already or not
+        // check if products already exits
 
         let existingItem = null;
-        for(let i = 0; i<cartParent.children.length;i++){
-            const item = cartParent.children[i];
-            console.log(item);
+        for (let item of cartParent.children) {
             const title = item.querySelector('h2').innerText;
             // console.log(title);
-           if(title===productTitle){
-            existingItem = item;
-            break;
-           }
-           
+            if (title === productTitle) {
+                existingItem = item;
+                break;
+            }
         }
-        if(existingItem){
+        if (existingItem) {
+            // update quantity
             const ProductQuantity = existingItem.querySelector("#product-quantity");
-            const total = existingItem.querySelector('#total');
-
-            const newQty = parseInt(ProductQuantity.innerText)+1;
+            const newQty = parseInt(ProductQuantity.innerText) + 1;
             ProductQuantity.innerText = newQty;
+            // update total for this item
+            const total = existingItem.querySelector('#total');
             const totalProductPrice = newQty * productPrice;
-            total.innerText = totalProductPrice;
-        }else{
-            
-        //    create Element
-        const newItem = document.createElement('div');
-        newItem.innerHTML = `<div class="bg-[#F4F1F1] flex my-4 items-center justify-around p-4 rounded-md relative">
+            total.innerText = totalProductPrice.toFixed(2);
+        } else {
+
+            //    create new cart Element
+            const newItem = document.createElement('div');
+            newItem.innerHTML = `<div class="bg-[#F4F1F1] flex my-4 items-center justify-around p-4 rounded-md relative">
         <i class="fa-solid fa-circle-xmark absolute top-[10%] left-[3%] text-2xl text-red-600"></i>
                             <img src="${productImg}" alt="">
                             <div>
                                 <h2 class="font-semibold text-xl text-[#111111]">${productTitle}</h2>
-                                <h2 class="text-xl text-[#111111]  "><span>${Number(productPrice)}</span>tk</h2>
+                                <h2 class="text-xl text-[#111111]  "><span>${Number(productPrice).toFixed(2)}</span>tk</h2>
                                 <h2 class="text-xl text-[#111111]  ">Quantity : <span id="product-quantity">1</span></h2>
-                                <h2 class="text-xl text-[#111111]  ">Total: <span id="total">${productPrice}</span>tk</h2>
+                                <h2 class="text-xl text-[#111111]  ">Total: <span id="total">${productPrice.toFixed(2)}</span>tk</h2>
                             </div>
                         </div>`
 
-       
-        
-         // append child
+            // append child
+            cartParent.prepend(newItem);
 
-        cartParent.prepend(newItem);
+            // removie item
+            newItem.querySelector('.fa-circle-xmark').addEventListener('click', function () {
+                const totalPrice = parseFloat(newItem.querySelector('#total').innerText);
+                const ProductQuantity = parseInt(newItem.querySelector('#product-quantity').innerText);
+                const total = getNumber('total-price');
+                const subtotalPrice = getNumber('subtotal-price');
+                const quantity = getNumber('quantity');
+                const newQuantity = quantity - ProductQuantity;
+                const newSubTotalPrice = subtotalPrice - totalPrice;
+                const newTotalPrice = total - totalPrice;
+                //    update total & subtotal & quantity
+                setNumber('subtotal-price', newSubTotalPrice.toFixed(2));
+                setNumber('total-price', newTotalPrice.toFixed(2));
+                setNumber('quantity', newQuantity);
 
-        // removie item
+                const coupon = parseInt(document.getElementById('coupon').value);
+                // const subtotalPrice = getNumber('subtotal-price');
+                if (coupon === validCoupon) {
+                    const saveMoney = (newSubTotalPrice* (10 / 100)).toFixed(2);
+                    setNumber('discount', saveMoney);
+                    const newTotal =newSubTotalPrice - saveMoney;
+                    setNumber('total-price', newTotal);
 
-        newItem.querySelector('.fa-circle-xmark').addEventListener('click',function(){
-            const productPrice =parseFloat(newItem.querySelector('div span').innerText);
-            const totalPrice = parseFloat(newItem.querySelector('#total').innerText);
-            const ProductQuantity = parseInt(newItem.querySelector('#product-quantity').innerText);
-            const subtotalPrice = getNumber('subtotal-price');
-            const quantity =  getNumber('quantity');
-            const newQuantity  = quantity - ProductQuantity;
-            const newSubTotalPrice = subtotalPrice - totalPrice;
-            const newTotalPrice = subtotalPrice - totalPrice;
-           // console.log(subtotalPrice);
-            setNumber('subtotal-price', newSubTotalPrice);
-            setNumber('total-price',newTotalPrice);
-            setNumber('quantity',newQuantity);
-            
+                }
+                else {
+                    setNumber('discount', 0);
+                    setNumber('total-price', newSubTotalPrice);
+                }
 
-
-            // console.log(totalProductPrice);
-            newItem.remove();
-        })
+                newItem.remove();
+            })
 
 
         }
-        
+
 
     }
 
